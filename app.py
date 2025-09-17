@@ -1134,14 +1134,29 @@ def main():
     with st.sidebar:
         st.header("📁 Upload Statement")
         
-        # File upload
+        # File upload with size limit info
+        st.info("📋 **File Requirements:**\n- Max size: 200MB\n- Formats: CSV, PDF\n- M-Pesa statement format")
+        
         uploaded_file = st.file_uploader(
             "Choose your M-Pesa statement file",
             type=['csv', 'pdf'],
-            help="Upload CSV or PDF format M-Pesa statements"
+            help="Upload CSV or PDF format M-Pesa statements (Max 200MB)"
         )
         
         if uploaded_file is not None:
+            # Check file size (200MB = 200 * 1024 * 1024 bytes)
+            file_size = uploaded_file.size
+            max_size = 200 * 1024 * 1024  # 200MB in bytes
+            
+            if file_size > max_size:
+                st.error(f"❌ File too large: {file_size / (1024*1024):.1f}MB. Maximum allowed: 200MB")
+                st.stop()
+            
+            # Display file info
+            st.write(f"📄 **File:** {uploaded_file.name}")
+            st.write(f"📊 **Size:** {file_size / (1024*1024):.2f}MB")
+            st.write(f"📋 **Type:** {uploaded_file.type}")
+            
             with st.spinner("Processing statement..."):
                 try:
                     # Process the uploaded file
@@ -1163,6 +1178,11 @@ def main():
                         
                 except Exception as e:
                     st.error(f"❌ Error processing file: {str(e)}")
+                    st.error("💡 **Troubleshooting tips:**")
+                    st.error("- Ensure file is a valid M-Pesa statement")
+                    st.error("- Try a smaller file size")
+                    st.error("- Check file format (CSV/PDF only)")
+                    st.error("- Refresh page and try again")
         
         # Filters section
         if st.session_state.categorized_data is not None:
