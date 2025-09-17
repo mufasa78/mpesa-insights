@@ -519,7 +519,7 @@ def render_ai_insights_section(df):
                 {
                     'Category': category,
                     'Predicted Amount': f"KSh {data['predicted_amount']:,.0f}",
-                    'Confidence': f"{data['confidence']:.0f}%",
+                    'Confidence': f"{data['confidence']*100:.0f}%",
                     'Trend': data['trend']
                 }
                 for category, data in category_predictions.items()

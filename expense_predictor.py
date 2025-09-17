@@ -51,6 +51,42 @@ class ExpensePredictor:
         
         return predictions
     
+    def predict_expenses(self, df: pd.DataFrame) -> Dict:
+        """Predict expenses with summary statistics - wrapper for compatibility"""
+        category_predictions = self.predict_monthly_expenses(df)
+        
+        if not category_predictions:
+            return {
+                'next_month_total': 0,
+                'trend': 'stable',
+                'confidence': 0,
+                'category_predictions': {}
+            }
+        
+        # Calculate total prediction
+        total_prediction = sum(pred['predicted_amount'] for pred in category_predictions.values())
+        
+        # Calculate overall trend
+        increasing_trends = sum(1 for pred in category_predictions.values() if pred['trend'] == 'increasing')
+        total_categories = len(category_predictions)
+        
+        if increasing_trends > total_categories * 0.6:
+            overall_trend = 'increasing'
+        elif increasing_trends < total_categories * 0.3:
+            overall_trend = 'decreasing'
+        else:
+            overall_trend = 'stable'
+        
+        # Calculate average confidence
+        avg_confidence = np.mean([pred['confidence'] for pred in category_predictions.values()]) * 100
+        
+        return {
+            'next_month_total': total_prediction,
+            'trend': overall_trend,
+            'confidence': avg_confidence,
+            'category_predictions': category_predictions
+        }
+    
     def _get_seasonal_factor(self, category: str, month: int) -> float:
         """Apply seasonal adjustments to predictions"""
         seasonal_factors = {
