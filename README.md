@@ -14,26 +14,31 @@ M-Pesa Insights isn't just another expense tracker. It's a **revolutionary finan
 ### 🎯 Key Features That Set Us Apart
 
 #### 🧠 **AI-Powered Markov Chain Predictions**
+
 - **Predict your next transactions** with 85%+ accuracy
 - **Behavioral pattern recognition** that learns from your spending habits
 - **Smart expense forecasting** for better financial planning
 
 #### 📊 **Intelligent Categorization Engine**
+
 - **Automatic transaction categorization** using advanced NLP
 - **Custom category mapping** that adapts to your lifestyle
 - **Smart merchant recognition** for accurate spending analysis
 
 #### 💡 **Personalized Financial Insights**
+
 - **Budget optimization recommendations** tailored to your income
 - **Spending anomaly detection** to catch unusual transactions
 - **Financial health scoring** with actionable improvement tips
 
 #### 🎨 **Beautiful Interactive Dashboard**
+
 - **Real-time visualizations** of your financial data
 - **Responsive design** that works on all devices
 - **Intuitive user experience** that makes finance fun
 
 #### 🤝 **Community-Driven Feedback System**
+
 - **Donation integration** for supporting development
 - **User feedback collection** for continuous improvement
 - **Community insights** sharing (anonymized)
@@ -41,18 +46,21 @@ M-Pesa Insights isn't just another expense tracker. It's a **revolutionary finan
 ## 🌟 Why Choose M-Pesa Insights?
 
 ### For Individuals
+
 - **Take control** of your financial future
 - **Discover hidden** spending patterns
 - **Make informed** financial decisions
 - **Achieve your** savings goals faster
 
 ### For Businesses
+
 - **Understand customer** transaction behaviors
 - **Optimize cash flow** management
 - **Identify growth** opportunities
 - **Make data-driven** business decisions
 
 ### For Developers
+
 - **Open-source** and extensible
 - **Modern Python** architecture
 - **Well-documented** APIs
@@ -61,12 +69,14 @@ M-Pesa Insights isn't just another expense tracker. It's a **revolutionary finan
 ## 🚀 Quick Start Guide
 
 ### Prerequisites
+
 ```bash
 Python 3.8+
 pip or conda package manager
 ```
 
 ### Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/mufasa78/mpesa-insights.git
@@ -81,6 +91,7 @@ pip install -r requirements.txt
 ```
 
 ### Launch the Application
+
 ```bash
 streamlit run app.py
 ```
@@ -90,24 +101,31 @@ Visit `http://localhost:8501` and start exploring your financial data!
 ## 📱 How It Works
 
 ### 1. **Upload Your Data**
+
 Simply upload your M-Pesa statement (PDF or CSV format)
 
 ### 2. **AI Processing**
+
 Our advanced algorithms automatically:
+
 - Parse and clean your transaction data
 - Categorize expenses intelligently
 - Identify spending patterns
 - Generate predictive models
 
 ### 3. **Explore Insights**
+
 Navigate through beautiful dashboards showing:
+
 - Spending trends and patterns
 - Budget vs actual comparisons
 - Future expense predictions
 - Personalized recommendations
 
 ### 4. **Take Action**
+
 Use insights to:
+
 - Optimize your budget
 - Reduce unnecessary expenses
 - Plan for future financial goals
@@ -120,6 +138,7 @@ Use insights to:
 ## 🏗️ Architecture & Technology
 
 ### Core Technologies
+
 - **Frontend**: Streamlit with custom CSS/JS
 - **Backend**: Python with pandas, numpy, scikit-learn
 - **AI/ML**: Markov Chains, NLP, Pattern Recognition
@@ -127,6 +146,7 @@ Use insights to:
 - **Visualization**: Plotly, Altair, custom charts
 
 ### Key Components
+
 ```
 ├── app.py                 # Main Streamlit application
 ├── data_processor.py      # Data parsing and cleaning
@@ -142,6 +162,7 @@ Use insights to:
 We welcome contributions from the community! Here's how you can help:
 
 ### Ways to Contribute
+
 - 🐛 **Report bugs** and suggest features
 - 💻 **Submit pull requests** with improvements
 - 📖 **Improve documentation** and tutorials
@@ -149,6 +170,7 @@ We welcome contributions from the community! Here's how you can help:
 - 💰 **Support development** through donations
 
 ### Development Setup
+
 ```bash
 # Fork the repository
 git clone https://github.com/YOUR_USERNAME/mpesa-insights.git
@@ -166,6 +188,7 @@ git push origin feature/amazing-feature
 ## 📊 Roadmap
 
 ### 🎯 Version 2.0 (Coming Soon)
+
 - [ ] **Multi-bank support** (Equity, KCB, Co-op)
 - [ ] **Mobile app** for iOS and Android
 - [ ] **Advanced ML models** for better predictions
@@ -173,6 +196,7 @@ git push origin feature/amazing-feature
 - [ ] **API integration** with banking services
 
 ### 🚀 Version 3.0 (Future)
+
 - [ ] **Investment tracking** and recommendations
 - [ ] **Cryptocurrency** portfolio management
 - [ ] **Business analytics** dashboard
