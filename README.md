@@ -203,9 +203,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Contact & Support
 
 - **GitHub Issues**: [Report bugs or request features](https://github.com/mufasa78/mpesa-insights/issues)
-- **Email**: [your-email@example.com]
-- **Twitter**: [@your-twitter-handle]
-- **LinkedIn**: [Your LinkedIn Profile]
+- **Email**: [njorogestan12@gmail.com]
+- **Twitter**: [@StanleyNjo20118]
 
 ---
 
