@@ -1228,7 +1228,7 @@ def main():
     # Handle feedback popup
     if st.session_state.show_feedback:
         with st.expander("📝 Quick Feedback", expanded=True):
-            feedback_system.render_feedback_form()
+            feedback_system.render_feedback_form(form_key="quick_feedback_form")
             if st.button("❌ Close Feedback"):
                 st.session_state.show_feedback = False
                 st.rerun()

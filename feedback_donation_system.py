@@ -146,7 +146,7 @@ class FeedbackDonationSystem:
         Your support enables continuous improvements and new features that benefit the entire community.
         """)
     
-    def render_feedback_form(self):
+    def render_feedback_form(self, form_key="feedback_form"):
         """Render the feedback collection form"""
         st.header("📝 Share Your Feedback")
         
@@ -155,7 +155,7 @@ class FeedbackDonationSystem:
         suggestions, or report any issues you've encountered.
         """)
         
-        with st.form("feedback_form"):
+        with st.form(form_key):
             # Feedback type
             feedback_type = st.selectbox(
                 "Feedback Type",
