@@ -106,13 +106,14 @@ def main():
                     df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
             
             # Category filter
-            categories = df['Category'].unique().tolist()
-            selected_categories = st.multiselect(
-                "Categories",
-                categories,
-                default=categories
-            )
-            df = df[df['Category'].isin(selected_categories)]
+            if 'Category' in df.columns:
+                categories = df['Category'].unique().tolist()
+                selected_categories = st.multiselect(
+                    "Categories",
+                    categories,
+                    default=categories
+                )
+                df = df[df['Category'].isin(selected_categories)]
             
             # Transaction type filter
             if 'Type' in df.columns:
@@ -218,21 +219,22 @@ def main():
             
             if not expenses_df.empty and 'Date' in expenses_df.columns:
                 # Monthly trend
-                monthly_data = expenses_df.groupby([
-                    expenses_df['Date'].dt.to_period('M'),
-                    'Category'
-                ])['Amount'].sum().reset_index()
-                monthly_data['Date'] = monthly_data['Date'].astype(str)
+                if 'Date' in expenses_df.columns:
+                    monthly_data = expenses_df.groupby([
+                        pd.Grouper(key='Date', freq='M'),
+                        'Category'
+                    ])['Amount'].sum().reset_index()
+                    monthly_data['Date'] = monthly_data['Date'].dt.strftime('%Y-%m')
                 
                 fig_trend = create_trend_chart(monthly_data, 'Date', 'Amount', 'Category', 'Monthly Spending Trends')
                 st.plotly_chart(fig_trend, use_container_width=True)
                 
                 # Monthly comparison
                 if len(monthly_data['Date'].unique()) >= 2:
-                    comparison_data = expenses_df.groupby([
-                        expenses_df['Date'].dt.to_period('M')
-                    ])['Amount'].sum().reset_index()
-                    comparison_data['Date'] = comparison_data['Date'].astype(str)
+                    comparison_data = expenses_df.groupby(
+                        pd.Grouper(key='Date', freq='M')
+                    )['Amount'].sum().reset_index()
+                    comparison_data['Date'] = comparison_data['Date'].dt.strftime('%Y-%m')
                     
                     fig_comparison = create_monthly_comparison(comparison_data, 'Date', 'Amount', 'Month-over-Month Comparison')
                     st.plotly_chart(fig_comparison, use_container_width=True)
@@ -265,7 +267,7 @@ def main():
                 
                 # Monthly comparison if available
                 if 'Date' in expenses_df.columns:
-                    monthly_totals = expenses_df.groupby(expenses_df['Date'].dt.to_period('M'))['Amount'].sum()
+                    monthly_totals = expenses_df.groupby(pd.Grouper(key='Date', freq='M'))['Amount'].sum()
                     if len(monthly_totals) >= 2:
                         latest_month = monthly_totals.iloc[-1]
                         previous_month = monthly_totals.iloc[-2]
@@ -275,15 +277,16 @@ def main():
                         st.write(f"• Your spending has **{direction}** by {abs(change):.1f}% compared to the previous month")
                 
                 # High-value transactions
-                high_value_threshold = expenses_df['Amount'].quantile(0.9)
-                high_value_transactions = expenses_df[expenses_df['Amount'] >= high_value_threshold]
-                
-                if not high_value_transactions.empty:
-                    st.write(f"**💸 High-Value Transactions (top 10%):**")
-                    st.dataframe(
-                        high_value_transactions[['Date', 'Details', 'Amount', 'Category']].head(10),
-                        use_container_width=True
-                    )
+                if len(expenses_df) > 0:
+                    high_value_threshold = expenses_df['Amount'].quantile(0.9)
+                    high_value_transactions = expenses_df[expenses_df['Amount'] >= high_value_threshold]
+                    
+                    if not high_value_transactions.empty:
+                        st.write(f"**💸 High-Value Transactions (top 10%):**")
+                        st.dataframe(
+                            high_value_transactions[['Date', 'Details', 'Amount', 'Category']].head(10),
+                            use_container_width=True
+                        )
         
         with tab4:
             st.subheader("Category Management")

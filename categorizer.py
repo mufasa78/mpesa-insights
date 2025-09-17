@@ -4,7 +4,7 @@ from typing import Dict, List
 
 class ExpenseCategorizer:
     def __init__(self, custom_mappings: Dict[str, str] = None):
-        self.custom_mappings = custom_mappings or {}
+        self.custom_mappings = custom_mappings if custom_mappings is not None else {}
         
         # Default categorization rules
         self.category_rules = {
@@ -149,7 +149,8 @@ class ExpenseCategorizer:
     def get_unknown_transactions(self, df: pd.DataFrame) -> pd.DataFrame:
         """Get transactions that couldn't be categorized"""
         categorized_df = self.categorize_transactions(df)
-        return categorized_df[categorized_df['Category'] == 'Other']
+        unknown_df = categorized_df[categorized_df['Category'] == 'Other']
+        return unknown_df
     
     def get_category_summary(self, df: pd.DataFrame) -> pd.DataFrame:
         """Get summary statistics by category"""
@@ -157,7 +158,8 @@ class ExpenseCategorizer:
         
         # Filter for expenses only (negative amounts)
         expenses_df = categorized_df[categorized_df['Amount'] < 0].copy()
-        expenses_df['Amount'] = expenses_df['Amount'].abs()
+        if len(expenses_df) > 0:
+            expenses_df['Amount'] = expenses_df['Amount'].abs()
         
         summary = expenses_df.groupby('Category').agg({
             'Amount': ['sum', 'count', 'mean'],

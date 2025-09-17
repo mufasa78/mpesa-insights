@@ -154,7 +154,8 @@ def create_daily_spending_heatmap(data: pd.DataFrame, title: str):
     
     # Filter for expenses only
     expenses = data_copy[data_copy['Amount'] < 0].copy()
-    expenses['Amount'] = expenses['Amount'].abs()
+    if len(expenses) > 0:
+        expenses['Amount'] = expenses['Amount'].abs()
     
     # Create pivot table
     heatmap_data = expenses.pivot_table(
