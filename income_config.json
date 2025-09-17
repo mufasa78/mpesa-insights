@@ -1,0 +1,18 @@
+{
+  "income_sources": {
+    "Salary": [
+      "ABC COMPANY LTD"
+    ],
+    "Freelance": [
+      "JOHN DOE CONSULTING",
+      "TECH SOLUTIONS"
+    ],
+    "Business Income": [
+      "BUSINESS SALES"
+    ],
+    "Side Hustle": [
+      "UBER DRIVER"
+    ]
+  },
+  "custom_mappings": {}
+}

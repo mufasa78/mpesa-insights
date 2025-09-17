@@ -3,10 +3,18 @@ import re
 from typing import Dict, List
 
 class ExpenseCategorizer:
-    def __init__(self, custom_mappings: Dict[str, str] = None):
+    def __init__(self, custom_mappings: Dict[str, str] = None, user_income_sources: Dict[str, List[str]] = None):
         self.custom_mappings = custom_mappings if custom_mappings is not None else {}
+        self.user_income_sources = user_income_sources if user_income_sources is not None else {}
         
         # Default categorization rules
+        self.income_rules = [
+            'salary', 'wage', 'business payment',
+            'deposit', 'cash in', 'refund', 'bonus', 'commission',
+            'freelance', 'consulting', 'dividend', 'interest', 'rental income',
+            'allowance', 'stipend', 'grant', 'loan received', 'investment return'
+        ]
+        
         self.category_rules = {
             'Food': [
                 'naivas', 'carrefour', 'quickmart', 'tuskys', 'nakumatt', 'shoprite',
@@ -78,7 +86,17 @@ class ExpenseCategorizer:
         if details in self.custom_mappings:
             return self.custom_mappings[details]
         
-        # Then check rule-based categorization
+        # Check user-defined income sources first (highest priority)
+        income_category = self._check_user_income_sources(details_lower)
+        if income_category:
+            return income_category
+        
+        # Check for income patterns
+        for keyword in self.income_rules:
+            if keyword in details_lower:
+                return 'Income'
+        
+        # Then check rule-based categorization for expenses
         for category, keywords in self.category_rules.items():
             for keyword in keywords:
                 if keyword in details_lower:
@@ -99,8 +117,11 @@ class ExpenseCategorizer:
             return self._categorize_till(details_lower)
         
         # Phone number patterns (person-to-person transfers)
-        if re.search(r'\b(254|0)\d{9}\b', details) and ('sent to' in details_lower or 'received from' in details_lower):
-            return 'Transfers'
+        if re.search(r'\b(254|0)\d{9}\b', details):
+            if 'received from' in details_lower:
+                return 'Income'  # Money received from someone
+            elif 'sent to' in details_lower:
+                return 'Transfers'  # Money sent to someone
         
         return 'Other'
     
@@ -142,9 +163,91 @@ class ExpenseCategorizer:
         
         return 'Shopping'  # Default for till transactions
     
+    def _check_user_income_sources(self, details_lower: str) -> str:
+        """Check if transaction matches user-defined income sources"""
+        for income_type, payers in self.user_income_sources.items():
+            for payer in payers:
+                # Check for exact match or partial match
+                payer_lower = payer.lower()
+                if payer_lower in details_lower or any(word in details_lower for word in payer_lower.split()):
+                    return f'Income - {income_type}'
+        return None
+    
     def add_custom_mapping(self, details: str, category: str) -> None:
         """Add a custom mapping for a specific transaction detail"""
         self.custom_mappings[details] = category
+    
+    def add_income_source(self, income_type: str, payer_names: List[str]) -> None:
+        """Add user-defined income source with payer names"""
+        if income_type not in self.user_income_sources:
+            self.user_income_sources[income_type] = []
+        self.user_income_sources[income_type].extend(payer_names)
+    
+    def remove_income_source(self, income_type: str, payer_name: str = None) -> None:
+        """Remove income source or specific payer"""
+        if income_type in self.user_income_sources:
+            if payer_name:
+                if payer_name in self.user_income_sources[income_type]:
+                    self.user_income_sources[income_type].remove(payer_name)
+                if not self.user_income_sources[income_type]:
+                    del self.user_income_sources[income_type]
+            else:
+                del self.user_income_sources[income_type]
+    
+    def get_income_sources_config(self) -> Dict[str, List[str]]:
+        """Get current income sources configuration"""
+        return self.user_income_sources.copy()
+    
+    def suggest_income_sources_from_data(self, df: pd.DataFrame) -> Dict[str, List[str]]:
+        """Analyze transactions and suggest potential income sources"""
+        suggestions = {}
+        
+        # Get potential income transactions (positive amounts)
+        income_candidates = df[df['Amount'] > 0].copy()
+        
+        if income_candidates.empty:
+            return suggestions
+        
+        # Group by transaction details and analyze patterns
+        transaction_groups = income_candidates.groupby('Details').agg({
+            'Amount': ['count', 'sum', 'mean'],
+            'Date': ['min', 'max']
+        }).round(2)
+        
+        transaction_groups.columns = ['Count', 'Total', 'Average', 'First_Date', 'Last_Date']
+        
+        # Filter for recurring transactions (appeared more than once)
+        recurring_income = transaction_groups[transaction_groups['Count'] > 1]
+        
+        # Categorize suggestions
+        for details, row in recurring_income.iterrows():
+            details_lower = str(details).lower()
+            
+            # Suggest based on patterns
+            if any(word in details_lower for word in ['salary', 'wage', 'payroll']):
+                if 'Salary' not in suggestions:
+                    suggestions['Salary'] = []
+                suggestions['Salary'].append(details)
+            elif any(word in details_lower for word in ['business', 'sales', 'payment', 'invoice']):
+                if 'Business Income' not in suggestions:
+                    suggestions['Business Income'] = []
+                suggestions['Business Income'].append(details)
+            elif any(word in details_lower for word in ['freelance', 'consulting', 'contract']):
+                if 'Freelance' not in suggestions:
+                    suggestions['Freelance'] = []
+                suggestions['Freelance'].append(details)
+            elif any(word in details_lower for word in ['received from', 'transfer from']) and row['Count'] >= 2:
+                if 'Regular Transfers' not in suggestions:
+                    suggestions['Regular Transfers'] = []
+                suggestions['Regular Transfers'].append(details)
+            else:
+                # High-value recurring transactions
+                if row['Average'] > 10000 and row['Count'] >= 2:
+                    if 'Other Regular Income' not in suggestions:
+                        suggestions['Other Regular Income'] = []
+                    suggestions['Other Regular Income'].append(details)
+        
+        return suggestions
     
     def get_unknown_transactions(self, df: pd.DataFrame) -> pd.DataFrame:
         """Get transactions that couldn't be categorized"""

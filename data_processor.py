@@ -192,99 +192,83 @@ class DataProcessor:
         return transactions
     
     def _parse_pdf_table(self, table):
-        """Parse transaction data from PDF table format"""
+        """Parse transaction data from PDF table format based on actual M-Pesa structure"""
         transactions = []
         
         if not table or len(table) < 2:
             return transactions
             
-        # Try to identify column headers
+        # Look for the detailed statement table (skip summary tables)
         headers = None
         data_rows = table
         
-        # Look for header row containing common M-Pesa column names
-        for i, row in enumerate(table[:3]):  # Check first 3 rows for headers
-            if row and any(col and isinstance(col, str) and 
-                          any(keyword in col.lower() for keyword in ['date', 'time', 'receipt', 'details', 'amount', 'balance'])
-                          for col in row if col):
-                headers = [col.lower().strip() if col else '' for col in row]
-                data_rows = table[i+1:]
-                break
+        # Check if this is the detailed transaction table
+        for i, row in enumerate(table[:3]):
+            if row and len(row) >= 6:  # M-Pesa detailed table has 7 columns
+                row_str = ' '.join([str(cell) for cell in row if cell]).lower()
+                if 'receipt' in row_str and 'completion' in row_str and 'details' in row_str:
+                    headers = [str(cell).lower().strip() if cell else '' for cell in row]
+                    data_rows = table[i+1:]
+                    break
         
         if not headers:
-            # Default column mapping for M-Pesa statements
-            headers = ['date', 'time', 'receipt', 'details', 'amount', 'balance']
+            # Skip this table if it's not the detailed transaction table
+            return transactions
         
         # Process data rows
         for row in data_rows:
-            if not row or len(row) < 4:  # Need at least date, details, amount, balance
+            if not row or len(row) < 6:  # M-Pesa table needs at least 6 columns
                 continue
                 
             try:
-                # Map columns based on position or header names
-                date_col = next((i for i, h in enumerate(headers) if 'date' in h), 0)
-                time_col = next((i for i, h in enumerate(headers) if 'time' in h), 1)
-                receipt_col = next((i for i, h in enumerate(headers) if 'receipt' in h), 2)
-                details_col = next((i for i, h in enumerate(headers) if 'detail' in h), 3)
-                amount_col = next((i for i, h in enumerate(headers) if 'amount' in h), 4)
-                balance_col = next((i for i, h in enumerate(headers) if 'balance' in h), 5)
+                # M-Pesa PDF structure: Receipt No, Completion Time, Details, Transaction Status, Paid in, Withdrawn, Balance
+                receipt = str(row[0]) if row[0] else ''
+                completion_time = str(row[1]) if row[1] else ''
+                details = str(row[2]) if row[2] else ''
+                status = str(row[3]) if row[3] else ''
+                paid_in = str(row[4]) if row[4] else '0.00'
+                withdrawn = str(row[5]) if row[5] else '0.00'
+                balance = str(row[6]) if len(row) > 6 and row[6] else '0.00'
                 
-                # Extract values
-                date_str = row[date_col] if len(row) > date_col and row[date_col] else ''
-                time_str = row[time_col] if len(row) > time_col and row[time_col] else '12:00'
-                receipt = row[receipt_col] if len(row) > receipt_col and row[receipt_col] else ''
-                details = row[details_col] if len(row) > details_col and row[details_col] else ''
-                amount_str = row[amount_col] if len(row) > amount_col and row[amount_col] else '0'
-                balance_str = row[balance_col] if len(row) > balance_col and row[balance_col] else '0'
-                
-                # Skip if essential data is missing
-                if not date_str or not details or not amount_str:
+                # Skip if essential data is missing or status is not COMPLETED
+                if not completion_time or not details or status.upper() != 'COMPLETED':
                     continue
                 
-                # Parse date with flexible time handling
+                # Parse completion time - format: "2025-07-01 19:47:53"
                 try:
-                    if isinstance(date_str, str) and '/' in date_str:
-                        if time_str and ':' in str(time_str):
-                            time_clean = str(time_str).replace(' ', '').upper()
-                            if 'AM' in time_clean or 'PM' in time_clean:
-                                try:
-                                    date = datetime.strptime(f"{date_str} {time_clean}", "%d/%m/%Y %I:%M%p")
-                                except ValueError:
-                                    # Try without AM/PM
-                                    time_only = time_clean.replace('AM', '').replace('PM', '')
-                                    date = datetime.strptime(f"{date_str} {time_only}", "%d/%m/%Y %H:%M")
-                            else:
-                                date = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M")
-                        else:
-                            date = datetime.strptime(date_str, "%d/%m/%Y")
-                    else:
-                        continue
+                    date = datetime.strptime(completion_time, "%Y-%m-%d %H:%M:%S")
                 except ValueError:
-                    continue
+                    try:
+                        # Try alternative format
+                        date = datetime.strptime(completion_time.split()[0], "%Y-%m-%d")
+                    except ValueError:
+                        continue
                 
-                # Parse amounts using helper method  
-                amount = self._parse_amount_with_sign(amount_str)
-                balance = self._parse_amount_with_sign(balance_str) if balance_str else 0.0
+                # Parse amounts
+                paid_in_amount = self._parse_amount_with_sign(paid_in)
+                withdrawn_amount = self._parse_amount_with_sign(withdrawn)
+                balance_amount = self._parse_amount_with_sign(balance)
                 
-                # Skip if essential data is missing
-                if not details.strip() or amount == 0.0:
-                    continue
+                # Calculate net amount (positive for money in, negative for money out)
+                if paid_in_amount > 0:
+                    amount = paid_in_amount
+                elif withdrawn_amount > 0:
+                    amount = -withdrawn_amount
+                else:
+                    continue  # Skip if no amount
+                
+                # Clean details - remove newlines and extra spaces
+                details_clean = ' '.join(details.split())
                 
                 # Determine transaction type
-                transaction_type = self._determine_transaction_type(str(details))
-                
-                # Only apply sign inference if no explicit sign markers were found
-                original_amount_str = str(amount_str) + str(balance_str or '')
-                if not any(marker in original_amount_str.upper() for marker in ['CR', 'DR', '(', ')', '-']):
-                    if transaction_type in ['Send Money', 'Buy Goods', 'Pay Bill', 'Withdraw', 'Airtime']:
-                        amount = -abs(amount)  # Ensure negative for expenses
+                transaction_type = self._determine_transaction_type(details_clean)
                 
                 transactions.append({
                     'Date': date,
-                    'Details': str(details).strip(),
+                    'Details': details_clean,
                     'Amount': amount,
-                    'Balance': balance,
-                    'Receipt': str(receipt),
+                    'Balance': balance_amount,
+                    'Receipt': receipt,
                     'Type': transaction_type
                 })
                 
@@ -323,23 +307,46 @@ class DataProcessor:
             return 0.0
     
     def _determine_transaction_type(self, details):
-        """Determine transaction type from details"""
+        """Determine transaction type from details based on actual M-Pesa patterns"""
         details_lower = details.lower()
         
-        if 'sent to' in details_lower or 'send money' in details_lower:
+        # Merchant payments
+        if 'merchant payment' in details_lower:
+            return 'Merchant Payment'
+        # Customer transfers
+        elif 'customer transfer' in details_lower or 'customer payment' in details_lower:
             return 'Send Money'
+        # Pay Bill transactions
+        elif 'pay bill' in details_lower:
+            return 'Pay Bill'
+        # Business payments (money received)
+        elif 'business payment' in details_lower:
+            return 'Receive Money'
+        # Overdraft and loan repayments
+        elif 'od loan repayment' in details_lower or 'overdraft' in details_lower:
+            return 'Loan Repayment'
+        elif 'overdraft of credit' in details_lower:
+            return 'Overdraft'
+        # Fuliza transactions
+        elif 'fuliza' in details_lower:
+            return 'Fuliza'
+        # Airtime and bundles
+        elif 'airtime' in details_lower or 'bundle' in details_lower or 'postpaid' in details_lower:
+            return 'Airtime/Bundles'
+        # Cash transactions
+        elif 'cash in' in details_lower or 'deposit' in details_lower:
+            return 'Cash In'
+        elif 'cash out' in details_lower or 'withdraw' in details_lower:
+            return 'Cash Out'
+        # Charges and fees
+        elif 'charge' in details_lower or 'fee' in details_lower:
+            return 'Charges'
+        # Send money (traditional)
+        elif 'sent to' in details_lower or 'send money' in details_lower:
+            return 'Send Money'
+        # Receive money (traditional)
         elif 'received from' in details_lower or 'receive money' in details_lower:
             return 'Receive Money'
-        elif 'buy goods' in details_lower or 'bought from' in details_lower:
-            return 'Buy Goods'
-        elif 'pay bill' in details_lower or 'paid to' in details_lower:
-            return 'Pay Bill'
-        elif 'withdraw' in details_lower or 'agent' in details_lower:
-            return 'Withdraw'
-        elif 'airtime' in details_lower or 'bundle' in details_lower:
-            return 'Airtime'
-        elif 'deposit' in details_lower or 'cash in' in details_lower:
-            return 'Deposit'
         else:
             return 'Other'
     
