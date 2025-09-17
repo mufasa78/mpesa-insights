@@ -25,7 +25,7 @@ if /i "%choice%"=="y" (
     fly launch
 ) else (
     echo 📦 Deploying existing app...
-    fly deploy
+    fly deploy --app mpesa-insights
 )
 
 echo.

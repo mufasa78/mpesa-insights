@@ -2,3 +2,4 @@ pandas>=2.3.2
 pdfplumber>=0.11.7
 plotly>=6.3.0
 streamlit>=1.49.1
+numpy>=1.24.0

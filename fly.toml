@@ -27,8 +27,8 @@ primary_region = 'fra'
     grace_period = "10s"
     interval = "30s"
     method = "GET"
-    timeout = "5s"
-    path = "/"
+    timeout = "10s"
+    path = "/_stcore/health"
 
 [[vm]]
   memory = '1gb'

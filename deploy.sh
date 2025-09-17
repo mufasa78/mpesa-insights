@@ -23,7 +23,7 @@ if [[ $choice == "y" || $choice == "Y" ]]; then
     fly launch
 else
     echo "📦 Deploying existing app..."
-    fly deploy
+    fly deploy --app mpesa-insights
 fi
 
 echo ""
