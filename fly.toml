@@ -1,20 +1,25 @@
-app = "mpesa-insights[mpesa-insights]"
-primary_region = "fra"
+# fly.toml app configuration file generated for mpesa-insights on 2025-09-17T16:32:30+03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'mpesa-insights'
+primary_region = 'fra'
 
 [build]
+
+[env]
+  PORT = '8501'
 
 [http_service]
   internal_port = 8501
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
 [[vm]]
-  cpu_kind = "shared"
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 512
-
-[env]
-  PORT = "8501"

@@ -22,7 +22,7 @@ class FeedbackDonationSystem:
             "buy_me_coffee_url": "https://buymeacoffee.com/njorogesta0",
             "mpesa_phone": "0716131888",
             "project_name": "M-Pesa Statement Analyzer",
-            "github_repo": "https://github.com/yourusername/mpesa-analyzer"
+            "github_repo": "https://github.com/mufasa78/mpesa-insights"
         }
         
         try:
@@ -82,8 +82,7 @@ class FeedbackDonationSystem:
             """, unsafe_allow_html=True)
             
             st.markdown("**Other Options:**")
-            st.markdown("• PayPal: [Donate via PayPal](https://paypal.me/yourhandle)")
-            st.markdown("• Ko-fi: [Support on Ko-fi](https://ko-fi.com/yourhandle)")
+            st.markdown("• More donation options coming soon!")
         
         with col2:
             st.subheader("🇰🇪 M-Pesa Donations (Kenya)")
@@ -561,7 +560,7 @@ def setup_donation_config():
         github_repo = st.text_input(
             "GitHub Repository URL",
             value=config.get("github_repo", ""),
-            placeholder="https://github.com/yourusername/mpesa-analyzer"
+            placeholder="https://github.com/mufasa78/mpesa-insights"
         )
         
         if st.form_submit_button("💾 Save Configuration"):
