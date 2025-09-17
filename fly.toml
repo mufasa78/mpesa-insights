@@ -1,4 +1,4 @@
-app = "mpesa-insights-[your-unique-suffix]"
+app = "mpesa-insights[mpesa-insights]"
 primary_region = "fra"
 
 [build]
